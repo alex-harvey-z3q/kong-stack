@@ -6,3 +6,5 @@ coverage/
 dist/
 bin/
 .cache/
+!infra/cdk/bin/
+!infra/cdk/bin/app.ts
