@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "typecheck": "tsc --noEmit",
     "synth": "cdk synth",
     "diff": "cdk diff",
     "deploy": "cdk deploy",
@@ -18,4 +19,3 @@
     "typescript": "^5.8.3"
   }
 }
-
