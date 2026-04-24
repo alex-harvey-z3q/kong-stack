@@ -1,0 +1,185 @@
+{
+  "_format_version": "3.0",
+  "_transform": true,
+  "services": [
+    {
+      "name": "orders-api",
+      "url": "http://orders-api.platform.local:8080",
+      "tags": [
+        "orders",
+        "v1"
+      ],
+      "plugins": [
+        {
+          "name": "request-transformer",
+          "config": {
+            "add": {
+              "headers": [
+                "X-Source: kong-gateway",
+                "X-Service-Name: orders-api"
+              ]
+            }
+          }
+        }
+      ],
+      "routes": [
+        {
+          "name": "orders-public-v1",
+          "paths": [
+            "/v1/orders"
+          ],
+          "methods": [
+            "GET"
+          ],
+          "strip_path": false,
+          "tags": [
+            "public",
+            "oidc",
+            "redis-rate-limit"
+          ],
+          "plugins": [
+            {
+              "name": "openid-connect",
+              "config": {
+                "issuer": "https://auth.dev.example.com",
+                "scopes_required": [
+                  "orders:read"
+                ],
+                "consumer_claim": [
+                  "preferred_username"
+                ],
+                "auth_methods": [
+                  "authorization_code",
+                  "bearer"
+                ]
+              }
+            },
+            {
+              "name": "rate-limiting-advanced",
+              "config": {
+                "limit": [
+                  1000
+                ],
+                "window_size": [
+                  60
+                ],
+                "strategy": "redis",
+                "namespace": "orders-public",
+                "sync_rate": 10,
+                "redis": {
+                  "host": "redis.internal",
+                  "port": 6379
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "orders-partner-v1",
+          "paths": [
+            "/partner/v1/orders"
+          ],
+          "methods": [
+            "GET"
+          ],
+          "strip_path": false,
+          "tags": [
+            "partner",
+            "jwt",
+            "local-rate-limit"
+          ],
+          "plugins": [
+            {
+              "name": "jwt",
+              "config": {
+                "claims_to_verify": [
+                  "exp"
+                ],
+                "key_claim_name": "iss"
+              }
+            },
+            {
+              "name": "rate-limiting",
+              "config": {
+                "policy": "local",
+                "minute": 120
+              }
+            }
+          ]
+        },
+        {
+          "name": "caller-debug-v1",
+          "paths": [
+            "/v1/caller"
+          ],
+          "methods": [
+            "GET"
+          ],
+          "strip_path": false,
+          "tags": [
+            "internal",
+            "mtls"
+          ],
+          "plugins": [
+            {
+              "name": "mtls-auth",
+              "config": {
+                "ca_certificates": [
+                  "orders-clients-ca"
+                ],
+                "skip_consumer_lookup": false
+              }
+            },
+            {
+              "name": "acl",
+              "config": {
+                "allow": [
+                  "platform-engineering"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "plugins": [
+    {
+      "name": "correlation-id",
+      "config": {
+        "header_name": "X-Correlation-ID",
+        "generator": "uuid#counter"
+      }
+    },
+    {
+      "name": "prometheus"
+    }
+  ],
+  "ca_certificates": [
+    {
+      "id": "orders-clients-ca",
+      "cert": "-----BEGIN CERTIFICATE-----\nREPLACE_ME_WITH_CA_CERT\n-----END CERTIFICATE-----"
+    }
+  ],
+  "consumers": [
+    {
+      "username": "partner-app",
+      "jwt_secrets": [
+        {
+          "algorithm": "HS256",
+          "key": "partner-app",
+          "secret": "replace-me"
+        }
+      ]
+    },
+    {
+      "username": "platform-debug",
+      "acls": [
+        {
+          "group": "platform-engineering"
+        }
+      ]
+    }
+  ]
+}
+

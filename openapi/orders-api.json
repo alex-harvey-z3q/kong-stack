@@ -1,0 +1,280 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Orders API",
+    "version": "1.0.0",
+    "summary": "Reference contract for a Kong-fronted enterprise API.",
+    "description": "A sample API used to demonstrate OpenAPI governance, Kong security policy, and infrastructure automation.",
+    "x-api-lifecycle": {
+      "stage": "active",
+      "sunsetPolicy": "Minimum 12 months notice before retirement."
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "Local Kong data plane"
+    },
+    {
+      "url": "https://api.dev.example.com",
+      "description": "Konnect-managed public gateway"
+    }
+  ],
+  "tags": [
+    {
+      "name": "orders",
+      "description": "Order retrieval endpoints."
+    },
+    {
+      "name": "platform",
+      "description": "Gateway identity and operational inspection endpoints."
+    }
+  ],
+  "paths": {
+    "/healthz": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Service health probe",
+        "tags": [
+          "platform"
+        ],
+        "responses": {
+          "200": {
+            "description": "Service is healthy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/orders": {
+      "get": {
+        "operationId": "listOrders",
+        "summary": "List orders for the caller tenant",
+        "tags": [
+          "orders"
+        ],
+        "security": [
+          {
+            "oidc": [
+              "orders:read"
+            ]
+          },
+          {
+            "bearerJwt": [
+              "orders:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Tenant-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional tenant override for internal testing."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of tenant-scoped orders.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListOrdersResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/orders/{orderId}": {
+      "get": {
+        "operationId": "getOrderById",
+        "summary": "Get a single order",
+        "tags": [
+          "orders"
+        ],
+        "security": [
+          {
+            "oidc": [
+              "orders:read"
+            ]
+          },
+          {
+            "bearerJwt": [
+              "orders:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The order was found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Order"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No order matched the requested identifier."
+          }
+        }
+      }
+    },
+    "/v1/caller": {
+      "get": {
+        "operationId": "getCallerIdentity",
+        "summary": "Inspect Kong-authenticated caller context",
+        "tags": [
+          "platform"
+        ],
+        "security": [
+          {
+            "mutualTls": []
+          },
+          {
+            "bearerJwt": [
+              "orders:debug"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gateway-propagated identity headers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallerIdentity"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "oidc": {
+        "type": "openIdConnect",
+        "openIdConnectUrl": "https://auth.dev.example.com/.well-known/openid-configuration"
+      },
+      "bearerJwt": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "mutualTls": {
+        "type": "mutualTLS"
+      }
+    },
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ok"
+          }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "required": [
+          "id",
+          "tenantId",
+          "status",
+          "amountCents",
+          "currency"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "paid",
+              "shipped"
+            ]
+          },
+          "amountCents": {
+            "type": "integer"
+          },
+          "currency": {
+            "type": "string"
+          }
+        }
+      },
+      "ListOrdersResponse": {
+        "type": "object",
+        "required": [
+          "tenantId",
+          "orders"
+        ],
+        "properties": {
+          "tenantId": {
+            "type": "string"
+          },
+          "orders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Order"
+            }
+          }
+        }
+      },
+      "CallerIdentity": {
+        "type": "object",
+        "required": [
+          "consumer",
+          "scopes",
+          "clientCertificateSubject"
+        ],
+        "properties": {
+          "consumer": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "clientCertificateSubject": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
+

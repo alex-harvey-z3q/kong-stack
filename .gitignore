@@ -1,0 +1,8 @@
+node_modules/
+cdk.out/
+.terraform/
+.DS_Store
+coverage/
+dist/
+bin/
+.cache/

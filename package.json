@@ -1,0 +1,13 @@
+{
+  "name": "kong-enterprise-api-platform-example",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "npm run test:node && npm run test:go",
+    "test:node": "node --test ./test/*.test.mjs",
+    "test:go": "mkdir -p .cache/go-build && cd services/orders-api && GOCACHE=$(cd ../.. && pwd)/.cache/go-build go test ./...",
+    "validate:openapi": "node ./scripts/validate-openapi.mjs",
+    "validate:kong": "node ./scripts/validate-kong.mjs"
+  }
+}
