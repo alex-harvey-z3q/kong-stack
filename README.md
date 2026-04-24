@@ -1,6 +1,6 @@
 # Kong Enterprise API Platform Example
 
-This repository is a compact reference project for the stack you described:
+This repository is a compact reference project for a stack including:
 
 - Kong Konnect / Gateway control plane and data plane concepts
 - Kong services, routes, plugins, and rate-limiting strategies
