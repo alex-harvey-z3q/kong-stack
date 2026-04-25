@@ -8,3 +8,5 @@ bin/
 .cache/
 !infra/cdk/bin/
 !infra/cdk/bin/app.ts
+infra/cdk/cdk.context.json
+infra/cdk/package-lock.json
