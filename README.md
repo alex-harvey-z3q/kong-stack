@@ -30,6 +30,7 @@ The example is intentionally compact. It is meant to show how the parts fit toge
 - [docs/architecture.md](./docs/architecture.md): high-level reference architecture.
 - [infra/cdk](./infra/cdk): CDK deployment example.
 - [infra/terraform](./infra/terraform): Terraform deployment example.
+- [setup.sh](./setup.sh): helper script that converts raw Konnect bootstrap values into deploy-ready AWS setup.
 
 ## Architecture Summary
 
@@ -102,102 +103,63 @@ In Konnect UI:
 3. Choose `Self-managed`.
 4. Choose `Docker` or `Linux (Docker)`.
 5. Name the gateway `kong-platform-dev`.
-6. Open the new gateway and click `Connect`.
-7. Generate the certificate and script for the data plane.
+6. Open the new gateway and go to `Data Plane Nodes`.
+7. Click `Configure data plane`.
+8. Generate the certificate and script for the data plane.
 
-The generated script is the source of truth for the values you need. In particular, capture:
+The generated script is the source of truth for the values you need. Save them into environment variables immediately:
 
-- `KONG_CLUSTER_CONTROL_PLANE`
-- `KONG_CLUSTER_TELEMETRY_ENDPOINT`
-- `KONG_CLUSTER_CERT`
-- `KONG_CLUSTER_CERT_KEY`
+```bash
+export KONG_CLUSTER_CONTROL_PLANE='YOUR_CLUSTER_CONTROL_PLANE'
+export KONG_CLUSTER_TELEMETRY_ENDPOINT='YOUR_CLUSTER_TELEMETRY_ENDPOINT'
+export KONG_CLUSTER_CERT='YOUR_CLUSTER_CERT_PEM'
+export KONG_CLUSTER_CERT_KEY='YOUR_CLUSTER_CERT_KEY_PEM'
+```
 
 You do not need to run the generated Docker command locally unless you want a quick smoke test.
 
-### 2. Export the Konnect environment variables
+### 2. Run the setup helper
 
-Take the values from the generated script and remove the trailing `:443` from the control plane and telemetry endpoints.
+The cleanest path in this repo is to save the four raw Konnect values into environment variables and then run [setup.sh](./setup.sh). The script will:
+
+- strip `:443` from the two host values
+- create or update the two AWS Secrets Manager secrets
+- print the exact `export` commands this repo expects
+
+Example:
 
 ```bash
-export PROJECT_NAME=kong-platform
-export ENVIRONMENT=dev
-export AWS_REGION=ap-southeast-2
+export KONG_CLUSTER_CONTROL_PLANE='YOUR_CLUSTER_CONTROL_PLANE'
+export KONG_CLUSTER_TELEMETRY_ENDPOINT='YOUR_CLUSTER_TELEMETRY_ENDPOINT'
+export KONG_CLUSTER_CERT='YOUR_CLUSTER_CERT_PEM'
+export KONG_CLUSTER_CERT_KEY='YOUR_CLUSTER_CERT_KEY_PEM'
+
+bash setup.sh
+```
+
+
+### 3. What the script produces
+
+The script will print the export commands you should use before deployment:
+
+```bash
+export PROJECT_NAME='kong-platform'
+export ENVIRONMENT='dev'
+export AWS_REGION='ap-southeast-2'
 export KONNECT_CONTROL_PLANE_HOST='YOUR_CONTROL_PLANE_HOST'
 export KONNECT_TELEMETRY_HOST='YOUR_TELEMETRY_HOST'
 export KONNECT_CLIENT_CERT_SECRET_NAME='konnect/dp/client-cert'
 export KONNECT_CLIENT_KEY_SECRET_NAME='konnect/dp/client-key'
 ```
 
-Example:
+It will also create or update these two secrets in AWS Secrets Manager:
 
-```bash
-export KONNECT_CONTROL_PLANE_HOST='example.au.cp.konghq.com'
-export KONNECT_TELEMETRY_HOST='example.au.tp.konghq.com'
-```
-
-### 3. Store the data plane certificate and key in Secrets Manager
-
-Create two local PEM files from the Konnect output.
-
-`konnect-dp-cert.pem`
-
-```pem
------BEGIN CERTIFICATE-----
-PASTE_THE_CLIENT_CERT_FROM_KONNECT_HERE
------END CERTIFICATE-----
-```
-
-`konnect-dp-key.pem`
-
-```pem
------BEGIN PRIVATE KEY-----
-PASTE_THE_CLIENT_PRIVATE_KEY_FROM_KONNECT_HERE
------END PRIVATE KEY-----
-```
-
-Create the secrets:
-
-```bash
-aws secretsmanager create-secret \
-  --region "$AWS_REGION" \
-  --name "$KONNECT_CLIENT_CERT_SECRET_NAME" \
-  --secret-string file://konnect-dp-cert.pem
-
-aws secretsmanager create-secret \
-  --region "$AWS_REGION" \
-  --name "$KONNECT_CLIENT_KEY_SECRET_NAME" \
-  --secret-string file://konnect-dp-key.pem
-```
-
-If the secrets already exist, update them instead:
-
-```bash
-aws secretsmanager put-secret-value \
-  --region "$AWS_REGION" \
-  --secret-id "$KONNECT_CLIENT_CERT_SECRET_NAME" \
-  --secret-string file://konnect-dp-cert.pem
-
-aws secretsmanager put-secret-value \
-  --region "$AWS_REGION" \
-  --secret-id "$KONNECT_CLIENT_KEY_SECRET_NAME" \
-  --secret-string file://konnect-dp-key.pem
-```
-
-Verify them:
-
-```bash
-aws secretsmanager describe-secret \
-  --region "$AWS_REGION" \
-  --secret-id "$KONNECT_CLIENT_CERT_SECRET_NAME"
-
-aws secretsmanager describe-secret \
-  --region "$AWS_REGION" \
-  --secret-id "$KONNECT_CLIENT_KEY_SECRET_NAME"
-```
+- `konnect/dp/client-cert`
+- `konnect/dp/client-key`
 
 ### 4. Security note
 
-If the private key was pasted into chat, screenshots, or any other place you do not fully control, regenerate the Konnect data plane certificate and update the two secrets before deployment.
+If the private key was pasted into chat, screenshots, or any other place you do not fully control, regenerate the Konnect data plane certificate and re-run the setup script before deployment.
 
 ## Kong Configuration Workflow
 
