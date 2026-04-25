@@ -25,6 +25,5 @@ This example treats the Kong control plane as the enforcement point for API life
 1. Update the OpenAPI document.
 2. Review versioning and lifecycle headers.
 3. Sync Kong control plane configuration through decK or Konnect.
-4. Roll data planes using CDK or Terraform-managed infrastructure.
+4. Roll data planes using CDK-managed infrastructure.
 5. Observe traffic and enforce deprecation windows before sunsetting an API version.
-

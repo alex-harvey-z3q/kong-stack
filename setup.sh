@@ -89,12 +89,6 @@ CDK example:
 cd infra/cdk
 npx cdk diff
 npx cdk deploy
-
-Terraform values to set:
-- konnect_control_plane_host=$konnect_control_plane_host
-- konnect_telemetry_host=$konnect_telemetry_host
-- konnect_client_cert_secret_arn=<Secrets Manager ARN for $konnect_client_cert_secret_name>
-- konnect_client_key_secret_arn=<Secrets Manager ARN for $konnect_client_key_secret_name>
 EOF2
 }
 

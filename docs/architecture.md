@@ -23,8 +23,6 @@ This repository models a small enterprise API platform with Kong controlling nor
   - `rate-limiting-advanced` with Redis for shared counters across replicas.
   - `rate-limiting` with `local` policy for simpler partner integrations.
 
-## Delivery Options
+## Delivery Option
 
-- [infra/cdk](../infra/cdk) shows a CDK TypeScript deployment path.
-- [infra/terraform](../infra/terraform) shows a Terraform deployment path for the same platform shape.
-
+- [infra/cdk](../infra/cdk) shows the CDK TypeScript deployment path.

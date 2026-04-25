@@ -5,7 +5,7 @@ A reference project for building and operating a Kong-based API platform with:
 - Kong Konnect control plane and Kong Gateway data planes
 - OpenAPI-driven API design and lifecycle governance
 - Enterprise API security with OIDC, JWT, and mTLS
-- AWS infrastructure automation in CDK (TypeScript) and Terraform
+- AWS infrastructure automation in CDK (TypeScript)
 - A small Go upstream service used as the demo backend
 
 ## What This Repo Demonstrates
@@ -16,7 +16,7 @@ This repo models a common enterprise setup:
 - Kong data planes run on AWS ECS/Fargate.
 - Kong routes traffic to an internal Go service.
 - API policy is managed declaratively.
-- Infrastructure can be provisioned with either CDK or Terraform.
+- Infrastructure is provisioned with CDK.
 
 The example is intentionally compact. It is meant to show how the parts fit together, not to be a production-ready platform module.
 
@@ -29,7 +29,6 @@ The example is intentionally compact. It is meant to show how the parts fit toge
 - [docs/api-governance.md](./docs/api-governance.md): API versioning and lifecycle expectations.
 - [docs/architecture.md](./docs/architecture.md): high-level reference architecture.
 - [infra/cdk](./infra/cdk): CDK deployment example.
-- [infra/terraform](./infra/terraform): Terraform deployment example.
 - [setup.sh](./setup.sh): helper script that converts raw Konnect bootstrap values into deploy-ready AWS setup.
 
 ## Architecture Summary
@@ -209,36 +208,14 @@ npx cdk deploy
 The CDK stack expects these environment variables to already be set:
 
 ```bash
-export PROJECT_NAME=kong-platform
-export ENVIRONMENT=dev
-export AWS_REGION=ap-southeast-2
+export PROJECT_NAME='kong-platform'
+export ENVIRONMENT='dev'
+export AWS_REGION='ap-southeast-2'
 export KONNECT_CONTROL_PLANE_HOST='YOUR_CONTROL_PLANE_HOST'
 export KONNECT_TELEMETRY_HOST='YOUR_TELEMETRY_HOST'
 export KONNECT_CLIENT_CERT_SECRET_NAME='konnect/dp/client-cert'
 export KONNECT_CLIENT_KEY_SECRET_NAME='konnect/dp/client-key'
 ```
-
-## Deploy With Terraform
-
-The Terraform example provisions the same high-level topology: VPC, ECS, ALB, Cloud Map, and Fargate services for Kong and the sample upstream.
-
-### Terraform workflow
-
-```bash
-cd infra/terraform
-cp terraform.tfvars.example terraform.tfvars
-terraform init
-terraform fmt -check
-terraform validate
-terraform plan
-```
-
-Populate `terraform.tfvars` with:
-
-- Konnect control plane host
-- Konnect telemetry host
-- Secrets Manager ARN for the client cert
-- Secrets Manager ARN for the client key
 
 ## Repository Layout
 
@@ -246,8 +223,7 @@ Populate `terraform.tfvars` with:
 .
 ├── docs/
 ├── infra/
-│   ├── cdk/
-│   └── terraform/
+│   └── cdk/
 ├── kong/
 ├── openapi/
 ├── scripts/
@@ -263,4 +239,4 @@ The repository is organized so that the key concerns stay close together:
 - API contracts and governance live with the source.
 - Kong policy is versioned and testable.
 - The demo service is small and easy to validate.
-- Infrastructure is available in both CDK and Terraform.
+- Infrastructure is defined in CDK.
