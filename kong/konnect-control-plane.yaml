@@ -1,0 +1,38 @@
+_format_version: "3.0"
+_transform: true
+services:
+  - name: orders-api
+    host: orders-api.platform.local
+    port: 8080
+    protocol: http
+    tags:
+      - konnect
+      - orders
+      - example
+    routes:
+      - name: orders-partner-v1
+        paths:
+          - /v1/partner/orders
+        methods:
+          - GET
+        strip_path: false
+        tags:
+          - partner
+          - jwt
+          - local-rate-limit
+        plugins:
+          - name: jwt
+            config:
+              claims_to_verify:
+                - exp
+              key_claim_name: iss
+          - name: rate-limiting
+            config:
+              policy: local
+              minute: 120
+consumers:
+  - username: partner-app
+    jwt_secrets:
+      - algorithm: HS256
+        key: partner-app
+        secret: ${{ env "DECK_PARTNER_JWT_SECRET" }}

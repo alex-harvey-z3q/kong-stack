@@ -41,7 +41,7 @@
             {
               "name": "openid-connect",
               "config": {
-                "issuer": "https://auth.dev.example.com",
+                "issuer": "${{ env \"DECK_OIDC_ISSUER\" }}",
                 "scopes_required": [
                   "orders:read"
                 ],
@@ -51,7 +51,8 @@
                 "auth_methods": [
                   "authorization_code",
                   "bearer"
-                ]
+                ],
+                "cache_tokens_salt": "${{ env \"DECK_OIDC_CACHE_TOKENS_SALT\" }}"
               }
             },
             {
@@ -77,7 +78,7 @@
         {
           "name": "orders-partner-v1",
           "paths": [
-            "/partner/v1/orders"
+            "/v1/partner/orders"
           ],
           "methods": [
             "GET"
@@ -182,4 +183,3 @@
     }
   ]
 }
-

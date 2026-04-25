@@ -16,7 +16,7 @@
       "description": "Local Kong data plane"
     },
     {
-      "url": "https://api.dev.example.com",
+      "url": "https://gateway.example.com",
       "description": "Konnect-managed public gateway"
     }
   ],
@@ -172,13 +172,52 @@
           }
         }
       }
+    },
+    "/v1/partner/orders": {
+      "get": {
+        "operationId": "listPartnerOrders",
+        "summary": "List orders for a partner integration",
+        "tags": [
+          "orders"
+        ],
+        "security": [
+          {
+            "bearerJwt": [
+              "orders:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Tenant-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional tenant override for internal testing."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of tenant-scoped orders for a JWT-authenticated partner caller.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListOrdersResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "securitySchemes": {
       "oidc": {
         "type": "openIdConnect",
-        "openIdConnectUrl": "https://auth.dev.example.com/.well-known/openid-configuration"
+        "openIdConnectUrl": "https://idp.example.com/.well-known/openid-configuration"
       },
       "bearerJwt": {
         "type": "http",
@@ -277,4 +316,3 @@
     }
   }
 }
-

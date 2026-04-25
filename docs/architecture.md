@@ -6,7 +6,7 @@ This repository models a small enterprise API platform with Kong controlling nor
 
 - Konnect or a self-managed Kong control plane owns services, routes, plugins, and policy rollout.
 - API contracts are defined in [openapi/orders-api.json](../openapi/orders-api.json).
-- Declarative gateway configuration lives in [kong/kong.json](../kong/kong.json) and [kong/konnect-control-plane.json](../kong/konnect-control-plane.json).
+- Declarative gateway configuration lives in [kong/kong.json](../kong/kong.json) and [kong/konnect-control-plane.yaml](../kong/konnect-control-plane.yaml).
 
 ## Data Plane
 

@@ -17,6 +17,8 @@
     * [3. What the script produces](#3-what-the-script-produces)
     * [4. Security note](#4-security-note)
 8. [Kong Configuration Workflow](#kong-configuration-workflow)
+    * [1. Export decK variables](#1-export-deck-variables)
+    * [2. Validate and sync Kong config](#2-validate-and-sync-kong-config)
 9. [Deploy With CDK](#deploy-with-cdk)
     * [CDK workflow](#cdk-workflow)
 10. [Repository Layout](#repository-layout)
@@ -49,7 +51,7 @@ The example is intentionally compact. It is meant to show how the parts fit toge
 - [services/orders-api](./services/orders-api): sample Go service with health, orders, and caller-context endpoints.
 - [openapi/orders-api.json](./openapi/orders-api.json): OpenAPI 3.1 contract for the demo API.
 - [kong/kong.json](./kong/kong.json): example Kong declarative configuration.
-- [kong/konnect-control-plane.json](./kong/konnect-control-plane.json): Konnect-oriented declarative state.
+- [kong/konnect-control-plane.yaml](./kong/konnect-control-plane.yaml): Konnect-oriented declarative state.
 - [docs/api-governance.md](./docs/api-governance.md): API versioning and lifecycle expectations.
 - [docs/architecture.md](./docs/architecture.md): high-level reference architecture.
 - [infra/cdk](./infra/cdk): CDK deployment example.
@@ -60,7 +62,7 @@ The example is intentionally compact. It is meant to show how the parts fit toge
 The sample API uses different gateway controls by audience:
 
 - `/v1/orders`: OIDC plus Redis-backed rate limiting
-- `/partner/v1/orders`: JWT plus local rate limiting
+- `/v1/partner/orders`: JWT plus local rate limiting
 - `/v1/caller`: mTLS plus ACLs
 
 The upstream Go service assumes Kong has already authenticated the caller and reads trusted gateway headers such as:
@@ -220,14 +222,69 @@ Use the declarative config in this repo as the source of truth for services, rou
 Files:
 
 - [kong/kong.json](./kong/kong.json): self-managed declarative config example
-- [kong/konnect-control-plane.json](./kong/konnect-control-plane.json): Konnect-oriented config
+- [kong/konnect-control-plane.yaml](./kong/konnect-control-plane.yaml): Konnect-oriented config
 
-Example sync commands:
+### 1. Export decK variables
+
+The Konnect sample config is JWT-first so it can be tested without standing up a separate OIDC provider. Export these values before syncing:
+
+- `DECK_PARTNER_JWT_SECRET`: generate a shared secret once for the environment. The Konnect config uses it for the `partner-app` consumer's HS256 credential.
+- `KONNECT_TOKEN`: create a Konnect personal access token in the Konnect UI by opening the Personal Access Tokens page and selecting `Generate Token`, then copy the token value.
+
+Example:
 
 ```bash
-deck gateway validate kong/konnect-control-plane.json
-deck gateway sync kong/konnect-control-plane.json
+export DECK_PARTNER_JWT_SECRET="$(openssl rand -hex 32)"
+export KONNECT_TOKEN='your-konnect-personal-access-token'
 ```
+
+The richer self-managed example in [kong/kong.json](./kong/kong.json) still includes OIDC and mTLS routes, but the default Konnect walkthrough uses JWT because it is easier to verify end to end.
+
+### 2. Validate and sync Kong config
+
+Use `deck gateway validate` if you want a live validation step against your Konnect control plane before syncing. This is optional once you already know the file and credentials are correct, but it is useful as a pre-flight check.
+
+```bash
+deck gateway validate \
+  --konnect-token "$KONNECT_TOKEN" \
+  --konnect-addr https://au.api.konghq.com \
+  --konnect-control-plane-name kong-platform-dev \
+  kong/konnect-control-plane.yaml
+
+deck gateway sync \
+  --konnect-token "$KONNECT_TOKEN" \
+  --konnect-addr https://au.api.konghq.com \
+  --konnect-control-plane-name kong-platform-dev \
+  kong/konnect-control-plane.yaml
+```
+
+### 3. Verify the deployed gateway
+
+After `npx cdk deploy`, copy the `GatewayUrl` output and smoke test Kong itself:
+
+```bash
+export GATEWAY_URL='http://your-alb-dns-name'
+curl -i "$GATEWAY_URL/"
+```
+
+A `404` from `/` is expected and confirms the request is reaching Kong.
+
+Then mint a partner JWT and call the JWT-protected route:
+
+```bash
+export PARTNER_JWT="$(node scripts/generate-partner-jwt.mjs)"
+curl -i \
+  -H "Authorization: Bearer $PARTNER_JWT" \
+  -H 'X-Tenant-ID: tenant-a' \
+  "$GATEWAY_URL/v1/partner/orders"
+```
+
+Expected results:
+
+- `200`: the gateway, JWT policy, and upstream service are all working.
+- `401` or `403`: the route exists, but the JWT credential or token is wrong.
+- `502` or `503`: the route exists, but Kong cannot reach the upstream service.
+- `404`: the Konnect config has not been synced successfully yet.
 
 ## Deploy With CDK
 
