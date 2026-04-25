@@ -45,6 +45,35 @@ The upstream Go service assumes Kong has already authenticated the caller and re
 - `X-Authenticated-Scope`
 - `X-Client-Cert-Subject`
 
+## Dependencies
+
+Install these tools before working through the local checks, Konnect sync, and AWS deployment steps:
+
+- `Node.js` and `npm`: used for the root validation scripts and the CDK app.
+- `Go`: used to run and test the demo `orders-api` service locally.
+- `AWS CLI`: used by `setup.sh` to create or update Secrets Manager secrets and by CDK during deploys.
+- `decK`: used to validate and sync the Kong declarative config into Konnect.
+
+Example install commands on macOS:
+
+```bash
+brew install go
+brew install awscli
+brew install kong/deck/deck
+```
+
+Verify the key CLI dependencies are available:
+
+```bash
+go version
+aws --version
+deck version
+node --version
+npm --version
+```
+
+You do not need a global CDK install. The repo uses the local CDK dependency through `npx cdk ...`.
+
 ## Quick Start
 
 ### Run local checks
