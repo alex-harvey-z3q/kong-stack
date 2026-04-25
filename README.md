@@ -1,5 +1,29 @@
 # Kong Enterprise API Platform Example
 
+#### Table of contents
+
+1. [Introduction](#introduction)
+2. [What This Repo Demonstrates](#what-this-repo-demonstrates)
+3. [Repository Overview](#repository-overview)
+4. [Architecture Summary](#architecture-summary)
+5. [Dependencies](#dependencies)
+6. [Quick Start](#quick-start)
+    * [Run local checks](#run-local-checks)
+    * [Run the full local check suite](#run-the-full-local-check-suite)
+    * [Run the Go service locally](#run-the-go-service-locally)
+7. [Konnect And AWS Setup](#konnect-and-aws-setup)
+    * [1. Create the gateway in Konnect](#1-create-the-gateway-in-konnect)
+    * [2. Run the setup helper](#2-run-the-setup-helper)
+    * [3. What the script produces](#3-what-the-script-produces)
+    * [4. Security note](#4-security-note)
+8. [Kong Configuration Workflow](#kong-configuration-workflow)
+9. [Deploy With CDK](#deploy-with-cdk)
+    * [CDK workflow](#cdk-workflow)
+10. [Repository Layout](#repository-layout)
+11. [Why This Structure](#why-this-structure)
+
+## Introduction
+
 A reference project for building and operating a Kong-based API platform with:
 
 - Kong Konnect control plane and Kong Gateway data planes
