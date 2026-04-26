@@ -23,8 +23,9 @@
     * [3. Verify the deployed gateway](#3-verify-the-deployed-gateway)
 9. [Deploy With CDK](#deploy-with-cdk)
     * [CDK workflow](#cdk-workflow)
-10. [Repository Layout](#repository-layout)
-11. [Why This Structure](#why-this-structure)
+10. [Teardown](#teardown)
+11. [Repository Layout](#repository-layout)
+12. [Why This Structure](#why-this-structure)
 
 ## Introduction
 
@@ -58,6 +59,7 @@ The example is intentionally compact. It is meant to show how the parts fit toge
 - [docs/architecture.md](./docs/architecture.md): high-level reference architecture.
 - [infra/cdk](./infra/cdk): CDK deployment example.
 - [setup.sh](./setup.sh): helper script that converts raw Konnect bootstrap values into deploy-ready AWS setup.
+- [teardown.sh](./teardown.sh): helper script that destroys the CDK stack and deletes the AWS secrets created for this demo.
 - [scripts/generate-partner-jwt.mjs](./scripts/generate-partner-jwt.mjs): helper that mints a test HS256 JWT for the partner route.
 
 ## Architecture
@@ -385,6 +387,16 @@ export KONNECT_TELEMETRY_HOST='YOUR_TELEMETRY_HOST'
 export KONNECT_CLIENT_CERT_SECRET_NAME='konnect/dp/client-cert'
 export KONNECT_CLIENT_KEY_SECRET_NAME='konnect/dp/client-key'
 ```
+
+## Teardown
+
+To remove the AWS resources created by this repo, run:
+
+```bash
+./teardown.sh
+```
+
+This destroys the CDK stack and deletes the two Secrets Manager secrets created by [setup.sh](./setup.sh). It does not delete your Konnect gateway or revoke your Konnect PAT; the script prints those remaining manual cleanup steps when it finishes.
 
 ## Repository Layout
 
