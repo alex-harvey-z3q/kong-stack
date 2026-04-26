@@ -13,12 +13,14 @@
     * [Run the Go service locally](#run-the-go-service-locally)
 7. [Konnect And AWS Setup](#konnect-and-aws-setup)
     * [1. Create the gateway in Konnect](#1-create-the-gateway-in-konnect)
-    * [2. Run the setup helper](#2-run-the-setup-helper)
-    * [3. What the script produces](#3-what-the-script-produces)
-    * [4. Security note](#4-security-note)
+    * [2. Create a Konnect PAT](#2-create-a-konnect-pat)
+    * [3. Run the setup helper](#3-run-the-setup-helper)
+    * [4. What the script produces](#4-what-the-script-produces)
+    * [5. Security note](#5-security-note)
 8. [Kong Configuration Workflow](#kong-configuration-workflow)
     * [1. Export decK variables](#1-export-deck-variables)
     * [2. Validate and sync Kong config](#2-validate-and-sync-kong-config)
+    * [3. Verify the deployed gateway](#3-verify-the-deployed-gateway)
 9. [Deploy With CDK](#deploy-with-cdk)
     * [CDK workflow](#cdk-workflow)
 10. [Repository Layout](#repository-layout)
@@ -56,6 +58,7 @@ The example is intentionally compact. It is meant to show how the parts fit toge
 - [docs/architecture.md](./docs/architecture.md): high-level reference architecture.
 - [infra/cdk](./infra/cdk): CDK deployment example.
 - [setup.sh](./setup.sh): helper script that converts raw Konnect bootstrap values into deploy-ready AWS setup.
+- [scripts/generate-partner-jwt.mjs](./scripts/generate-partner-jwt.mjs): helper that mints a test HS256 JWT for the partner route.
 
 ## Architecture Summary
 
@@ -172,7 +175,23 @@ export KONG_CLUSTER_CERT_KEY='YOUR_CLUSTER_CERT_KEY_PEM'
 
 You do not need to run the generated Docker command locally unless you want a quick smoke test.
 
-### 2. Run the setup helper
+### 2. Create a Konnect PAT
+
+Before using `decK`, create a Konnect personal access token for API access:
+
+1. Open Konnect and click your avatar in the top right.
+2. Open `Personal Access Tokens`.
+3. Click `Generate Token`.
+4. Give it a name such as `deck-sync`.
+5. Copy the token value immediately and export it in your shell:
+
+```bash
+export KONNECT_TOKEN='your-konnect-personal-access-token'
+```
+
+You will use this token for `deck gateway validate` and `deck gateway sync`.
+
+### 3. Run the setup helper
 
 The cleanest path in this repo is to save the four raw Konnect values into environment variables and then run [setup.sh](./setup.sh). The script will:
 
@@ -192,7 +211,7 @@ bash setup.sh
 ```
 
 
-### 3. What the script produces
+### 4. What the script produces
 
 The script will print the export commands you should use before deployment:
 
@@ -211,7 +230,7 @@ It will also create or update these two secrets in AWS Secrets Manager:
 - `konnect/dp/client-cert`
 - `konnect/dp/client-key`
 
-### 4. Security note
+### 5. Security note
 
 If the private key was pasted into chat, screenshots, or any other place you do not fully control, regenerate the Konnect data plane certificate and re-run the setup script before deployment.
 
@@ -229,7 +248,7 @@ Files:
 The Konnect sample config is JWT-first so it can be tested without standing up a separate OIDC provider. Export these values before syncing:
 
 - `DECK_PARTNER_JWT_SECRET`: generate a shared secret once for the environment. The Konnect config uses it for the `partner-app` consumer's HS256 credential.
-- `KONNECT_TOKEN`: create a Konnect personal access token in the Konnect UI by opening the Personal Access Tokens page and selecting `Generate Token`, then copy the token value.
+- `KONNECT_TOKEN`: the Konnect personal access token you created in the setup section above.
 
 Example:
 
@@ -272,7 +291,7 @@ A `404` from `/` is expected and confirms the request is reaching Kong.
 Then mint a partner JWT and call the JWT-protected route. Kong exposes `/v1/partner/orders` publicly and rewrites it to the upstream service's `/v1/orders` path:
 
 ```bash
-export PARTNER_JWT="$(node scripts/generate-partner-jwt.mjs)"
+export PARTNER_JWT="$(DECK_PARTNER_JWT_SECRET="$DECK_PARTNER_JWT_SECRET" node scripts/generate-partner-jwt.mjs)"
 curl -i \
   -H "Authorization: Bearer $PARTNER_JWT" \
   -H 'X-Tenant-ID: tenant-a' \
