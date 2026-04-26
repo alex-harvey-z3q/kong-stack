@@ -60,6 +60,46 @@ The example is intentionally compact. It is meant to show how the parts fit toge
 - [setup.sh](./setup.sh): helper script that converts raw Konnect bootstrap values into deploy-ready AWS setup.
 - [scripts/generate-partner-jwt.mjs](./scripts/generate-partner-jwt.mjs): helper that mints a test HS256 JWT for the partner route.
 
+## Architecture
+
+```text
+                                +----------------------+
+                                |     (Laptop)         |
+                                |----------------------|
+                                | setup.sh             |
+                                | decK sync            |
+                                | JWT generation       |
+                                +----------+-----------+
+                                           |
+                                           | sync config
+                                           v
++----------------------+         +------------------------------+
+|      Konnect         |<------->|   Kong DP nodes status       |
+|----------------------|         |   Connected / In Sync        |
+| Control plane config |         +------------------------------+
++----------+-----------+
+           ^
+           | mTLS / cluster control
+           |
+           v
++----------------------+      +----------------------+      +----------------------+
+|   Kong DP task #1    |----->|   orders-api svc     |<-----|   Kong DP task #2    |
+|   ECS / Fargate      |      |   ECS / Fargate      |      |   ECS / Fargate      |
++----------+-----------+      +----------------------+      +----------+-----------+
+           ^                                                           ^
+           |                                                           |
+           +--------------------+  ALB forwards HTTP   +---------------+
+                                |                      |
+                                v                      v
+                           +----------------------------------+
+                           |     AWS ALB / GatewayUrl         |
+                           +----------------+-----------------+
+                                            ^
+                                            |
+                                            |
+                                     Client / Browser / curl
+```
+
 ## Architecture Summary
 
 The sample API uses different gateway controls by audience:
