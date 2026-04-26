@@ -83,7 +83,7 @@
           "methods": [
             "GET"
           ],
-          "strip_path": false,
+          "strip_path": true,
           "tags": [
             "partner",
             "jwt",
@@ -141,7 +141,8 @@
             }
           ]
         }
-      ]
+      ],
+      "path": "/v1/orders"
     }
   ],
   "plugins": [

@@ -269,7 +269,7 @@ curl -i "$GATEWAY_URL/"
 
 A `404` from `/` is expected and confirms the request is reaching Kong.
 
-Then mint a partner JWT and call the JWT-protected route:
+Then mint a partner JWT and call the JWT-protected route. Kong exposes `/v1/partner/orders` publicly and rewrites it to the upstream service's `/v1/orders` path:
 
 ```bash
 export PARTNER_JWT="$(node scripts/generate-partner-jwt.mjs)"

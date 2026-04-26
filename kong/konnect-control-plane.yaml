@@ -5,6 +5,7 @@ services:
     host: orders-api.platform.local
     port: 8080
     protocol: http
+    path: /v1/orders
     tags:
       - konnect
       - orders
@@ -15,7 +16,7 @@ services:
           - /v1/partner/orders
         methods:
           - GET
-        strip_path: false
+        strip_path: true
         tags:
           - partner
           - jwt
